@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import customer_profile_module as cpm
 def clean(inp):
     obj = inp
@@ -7,7 +8,15 @@ def clean(inp):
     obj.columns = obj.columns.str.replace(')', '')
     obj.fillna(0)
     return obj
-
+# make a concatenate functions
+def concat(dir_name):
+    frame = pd.DataFrame()
+    abs_file_path = os.path.abspath(dir_name)
+    for file in os.listdir(abs_file_path)
+        if file.endswith('.csv'):
+            frame.concat(pd.read_csv(file))
+    return frame
+            
 class FieldLoader:
     def __init__(self, frame):
         self.frame = frame
@@ -31,7 +40,6 @@ class FieldLoader:
         first_order = self.frame.loc[:, 'Customer_first_order_date']
         sale_total = self.frame.loc[:, "Order_Total_Amount"]
         number_of_sales = self.frame.loc[:, 'Customer_Total_Orders']
-        order_number = self.frame.loc[:, "Customer_Total_Orders"]
         raw_sales_product_cell = self.frame.loc[:, "Product_Name"]
         raw_product_quantity_cell = self.frame.loc[:, "Quantity"]
         total_gross_sales = self.frame.loc[:, "Customer_Total_Spent"]
