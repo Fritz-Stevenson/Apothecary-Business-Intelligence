@@ -18,16 +18,35 @@ class dataframe_analysis:
     def customer_role_breakdown(self):
         retail = 0
         wholesale = 0
+        sum_count =int(len(self.csv.index))
         for i, row in self.csv.iterrows():
             if row.loc["Customer_Role"] == 'Customer':
                 retail += int(row.loc["Order_Total_Amount"])
             else: wholesale += int(row.loc["Order_Total_Amount"])
+        sum_sales = retail + wholesale
         counts = self.csv["Customer_Role"].value_counts().to_dict()
         roles = list(counts.keys())
         count = list(counts.values())
         data = zip(roles, count)
         c_role_dataframe = pd.DataFrame(data, columns = ['Roles', 'Count'])
-        c_role_dataframe.insert(2,column ='Sales_Total', value=[retail, wholesale,0])
+        c_role_dataframe = c_role_dataframe[c_role_dataframe.Roles != 'Subscriber']
+        c_role_dataframe.insert(2,column ='Sales_Total', value=[int(retail), int(wholesale)])
+        c_role_dataframe['Average_Sale_Revenue']= c_role_dataframe['Sales_Total']/c_role_dataframe['Count']
+        c_role_dataframe['Proportional_Sales'] = c_role_dataframe['Sales_Total']/sum_sales
+        c_role_dataframe['Proportional_Count'] = c_role_dataframe['Count']/sum_count
+        cdb_dv = ColumnDataSource(c_role_dataframe)
+        roles = c_role_dataframe['Roles'].tolist()
+        cdb_dv.data.keys()
+        subkey_list = ['Proportional_Sales', 'Proportional_Count']
+        visual = figure(x_range= roles, width=700, height=700,
+                        title='Customer Role Sales Breakdown', x_axis_label='Roles',
+                        y_axis_label='Proportionate Value', toolbar_location=None, tools='hover',
+                        tooltips=[('Average Sale Revenue', '@Average_Sale_Revenue'),
+                                  (Proportionate)]
+                        )
+        visual.vbar_stack(subkey_list, x='Roles', width=0.6, color=['green', 'yellow'],
+                          source=cdb_dv, legend_label=subkey_list)
+        show(visual)
         return print(c_role_dataframe)
 
     def geographical_breakdown(self):

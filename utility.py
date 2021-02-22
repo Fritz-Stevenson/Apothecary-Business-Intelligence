@@ -12,7 +12,7 @@ def clean(inp):
 def concat(dir_name):
     frame = pd.DataFrame()
     abs_file_path = os.path.abspath(dir_name)
-    for file in os.listdir(abs_file_path)
+    for file in os.listdir(abs_file_path):
         if file.endswith('.csv'):
             frame.concat(pd.read_csv(file))
     return frame

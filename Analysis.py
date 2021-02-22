@@ -68,8 +68,8 @@ This should complete the update of profile csv files'''
 file = pd.read_csv('CSV_Files\\Raw_Analysis.csv')
 # Test slice for functionality
 file = u.clean(file)
-d_v = dm.dataframe_analysis(file)
-d_v.geographical_breakdown()
+d_v = ma.dataframe_analysis(file)
+d_v.customer_role_breakdown()
 '''Work log:
 2/19
 functionality and indexing for time: reading, saving and analyzing time fields
