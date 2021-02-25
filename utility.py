@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import customer_profile_module as cpm
+import customer_profile as cpm
 def clean(inp):
     obj = inp
     obj.columns = obj.columns.str.replace(' ','_')
@@ -44,7 +44,7 @@ class FieldLoader:
         raw_product_quantity_cell = self.frame.loc[:, "Quantity"]
         total_gross_sales = self.frame.loc[:, "Customer_Total_Spent"]
         raw_item_cost_cell = self.frame.loc[:, "Item_Cost"]
-        field_zip = zip(name, role, email, date, first_order, sale_total, number_of_sales,raw_sales_product_cell,
+        field_zip = zip(name, role, email, date, first_order, sale_total, number_of_sales, raw_sales_product_cell,
             raw_product_quantity_cell, raw_item_cost_cell, total_gross_sales)
         return list(field_zip)[self.row_number]
 
