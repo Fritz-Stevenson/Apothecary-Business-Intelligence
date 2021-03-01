@@ -48,4 +48,39 @@ class FieldLoader:
             raw_product_quantity_cell, raw_item_cost_cell, total_gross_sales)
         return list(field_zip)[self.row_number]
 
-
+def date_difference_compiler():
+    retail = os.listdir(os.getcwd()+'\\retail_customers')
+    wholesale = os.listdir(os.getcwd()+'\\wholesale_customers')
+    full_set =[]
+    day_threshold = 40 # This number will control the days since previous sale threshold for email campaigns
+    for i in retail, wholesale:
+        c = pd.read_csv('.\\retail_customers\\'+i)
+        name = c.at[0,'Value']
+        email = c.at[1, 'Value']
+        dd_count = c.at[5, 'Totals']
+        dd_count =dd_count.split('\n')
+        print(dd_count)
+        print(type(dd_count))
+        if type(dd_count)!= list:
+            if int(dd_count) > day_threshold:
+                full_set.append(email)
+        if type(dd_count) == list:
+            if int(dd_count[-1])> day_threshold:
+                full_set.append(email)
+        print(dd_count)
+    for i in wholesale:
+        c = pd.read_csv('.\\wholesale_customers\\' + i)
+        name = c.at[0, 'Value']
+        email = c.at[1, 'Value']
+        dd_count = c.at[5, 'Totals']
+        dd_count.split('\n')
+        print(dd_count)
+        print(type(dd_count))
+        if type(dd_count) != list:
+            if int(dd_count) > day_threshold:
+                full_set.append(email)
+        if type(dd_count) == list:
+            if int(dd_count[-1]) > day_threshold:
+                full_set.append(email)
+        print(dd_count)
+    return print(full_set)
