@@ -44,7 +44,7 @@ class FieldLoader:
         '''Sets appropriate cells as parameters, in the correct order '''
         #how about making this a list of lists, and making each row accessible as the fields
         # of a customer_profile_module.SalesRow call
-        name = self.frame.loc[:, 'Full_Name_Shipping']
+        name = self.frame.loc[:, 'Full_Name_Billing']
         role = self.frame.loc[:, "Customer_Role"]
         email = self.frame.loc[:, 'Email_Billing']
         date = self.frame.loc[:, 'Order_Date']
