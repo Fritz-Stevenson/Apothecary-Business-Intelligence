@@ -83,13 +83,13 @@ class dataframe_analysis:
         show(visual)
         return print(geo_dataframe)
 
-class product_analysis:
-    '''Arms Macro-Analysis capability to a dataframe'''
+class ProductAnalysis:
+    '''Arms product analysis capability to a dataframe'''
 
     def __init__(self, frame):
         self.csv = frame  # dataframe object
-        self.time_span = None
         self.analysis_frame = self.monthly_product_frame()
+        self.time_span = self.serve_time_span()  # list of tuples: x[0] == year, x[1] == month for x in self.time_span
 
     def monthly_product_frame(self):
         from datetime import datetime
@@ -156,18 +156,18 @@ class product_analysis:
             self.analysis_frame = pd.concat([self.analysis_frame, append_frame], ignore_index=True)
         self.time_span = time_span
         return self.analysis_frame
+
     def product_change_over_month_analysis(self):
         year = int(input('Type the year you would like to query in yyyy format:  '))
         month = int(input('Type the month you would like to query:  '))
-        print(month)
-        data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year]
+        data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[self.analysis_frame['revenue']>500]
         data_slice.sort_values(by='change_over_month', inplace=True, ascending=False)
-        print(data_slice.iat[0, 5])
         return print(data_slice.head(5))
-    def product_line_change_over_month_analysis(self):
+
+    def product_line_change_over_month_analysis(self, year, month):
         import information_repository as ir
-        year = int(input('Type the year you would like to query in yyyy format:  '))
-        month = int(input('Type the month you would like to query:  '))
+        #year = int(input('Type the year you would like to query in yyyy format:  '))
+        #month = int(input('Type the month you would like to query:  '))
         product_line_list_of_lists = [ir.tea_product_list, ir.capsule_product_list, ir.smokeable_product_list,
                              ir.skincare_product_list, ir.superfood_product_list, ir.honey_product_list,
                              ir.tincture_product_list]
@@ -178,21 +178,59 @@ class product_analysis:
             line_list = []
             line_list.append(year)
             line_list.append(month)
-            print(month)
             data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[
                 self.analysis_frame['product'].isin(product_line)]
-            avg_change_over_month = data_slice['change_over_month'].mean()
+            if month > 1:
+                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == (month - 1)].loc[self.analysis_frame['year'] == year].loc[
+                    self.analysis_frame['product'].isin(product_line)]
+            else:
+                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == 12].loc[self.analysis_frame['year'] == (year - 1)].loc[
+                    self.analysis_frame['product'].isin(product_line)]
+            last_month_revenue = last_month_frame['revenue'].sum()
+            this_month_revenue = data_slice['revenue'].sum()
+            avg_change_over_month = 100 - (this_month_revenue / last_month_revenue) * 100
             line_list.append(avg_change_over_month)
             product_line = product_line_strings[line_index_counter]
             line_index_counter += 1
-            print(product_line_list_of_lists)
             line_list.append(product_line)
             product_line_append_list.append(line_list)
         product_line_analysis_frame = pd.DataFrame(data=product_line_append_list,
                                                    columns=['year', 'month', 'avg_change_over_month',
                                                             'product_line'])
-        print(product_line_analysis_frame.head(5))
-        '''Functional but unweighted averages: Need to find sum of product line revenue and weight changeover month 
-        by the fraction of total product line sales each sku comprises.'''
+        print(product_line_analysis_frame.head(7))
+        return product_line_analysis_frame
+
+    def serve_time_span(self):
+        return sorted(sorted(list(set([*zip(self.analysis_frame['year'],self.analysis_frame['month'])])),
+                            key=lambda x:x[1]), key=lambda x:x[0])
+
+    def product_line_change_over_month_graph(self):
+        line_change_frame_data = []
+        for i in self.time_span:
+            month_frame = self.product_line_change_over_month_analysis(i[0], i[1])
+            change_list = month_frame['avg_change_over_month']
+            line_change_frame_data.append(change_list)
+        treated_line_change_frame_data = []
+        for i in range(len(line_change_frame_data)):
+            if i ==0:
+                treated_line_change_frame_data.append(line_change_frame_data[0])
+            else:
+                month_cumulative_change_list = []
+                for x in range(len(line_change_frame_data[0])):
+                    prior_change_list = [x for x in line_change_frame_data[:][x]]
+                    product_cumulative_change = (treated_line_change_frame_data[i-1][x]/100) * ((100+prior_change_list[i])/100)*100
+                    month_cumulative_change_list.append(product_cumulative_change)
+                treated_line_change_frame_data.append(month_cumulative_change_list)
+        print(treated_line_change_frame_data)
+        graph_frame = pd.DataFrame(data=treated_line_change_frame_data, columns=['Tea', 'Capsules', 'Smokeables','Skincare',
+                                                                           'Superfood', 'Honey', 'Tinctures'])
+        print(graph_frame.head(15))
+        return graph_frame
+        '''At the moment, the structure for the graph frame is in place, but the product_cumulative change variable is 
+        likely the cause of problems. Needs debugging.'''
 
 
+import utility as u
+object = u.clean(u.concat('CSV_Files'))
+a = ProductAnalysis(object)
+a.product_line_change_over_month_graph()

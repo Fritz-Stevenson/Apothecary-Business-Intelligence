@@ -14,6 +14,7 @@ for i, row in concat_file.iterrows():
     raw_quantities = row['Quantity'].replace('\r','').split('\n')
     raw_cost = row['Item_Cost'].replace('\r','').split('\n')
     for key in range(len(raw_products)):
+        print(raw_products[key])
         product = [i for i in ir.p_list if i in raw_products[key]][0]
         quantity = int(raw_quantities[key])
         revenue = float(raw_cost[key])
@@ -76,16 +77,27 @@ for i in time_span:
         line_list = []
         line_list.append(year)
         line_list.append(month)
-        print(month)
         data_slice = big_frame.loc[big_frame['month'] == month].loc[big_frame['year'] == year].loc[big_frame['product'].isin(product_line)]
-        avg_change_over_month = data_slice['change_over_month'].mean()
+        if month > 1:
+            last_month_frame = big_frame.loc[big_frame['month'] == (month-1)].loc[big_frame['year'] == year].loc[big_frame['product'].isin(product_line)]
+        else:
+            last_month_frame = big_frame.loc[big_frame['month'] == 12].loc[big_frame['year'] == (year-1)].loc[big_frame['product'].isin(product_line)]
+        last_month_revenue = last_month_frame['revenue'].sum()
+        this_month_revenue = data_slice['revenue'].sum()
+        avg_change_over_month = 100 - (this_month_revenue/last_month_revenue)*100
         line_list.append(avg_change_over_month)
         product_line = product_line_strings[line_index_counter]
         line_index_counter += 1
-        print(product_line_list)
         line_list.append(product_line)
         product_line_append_list.append(line_list)
     product_line_analysis_frame = pd.DataFrame(data=product_line_append_list, columns=['year', 'month', 'avg_change_over_month', 'product_line'])
-    print(product_line_analysis_frame.head(5))
+    print(product_line_analysis_frame.head(7))
     '''Functional but unweighted averages: Need to find sum of product line revenue and weight changeover month 
     by the fraction of total product line sales each sku comprises.'''
+df_cost = pd.read_csv('orders3-21-Product-Cost.csv')
+df_product = pd.read_csv('orders3-21-Product_name.csv')
+df_quantity = pd.read_csv('orders3-21-Product_quantity.csv')
+df_dates_and_emails = pd.read_csv('03-21_dates.csv', names=['Order Date', 'Email (Billing)'])
+march_frame = pd.concat([df_dates_and_emails, df_product, df_quantity, df_cost], axis=1)
+
+march_frame.to_csv('.\\CSV_Files\\orders21-03.csv')
