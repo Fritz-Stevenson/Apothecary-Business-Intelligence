@@ -188,7 +188,7 @@ class ProductAnalysis:
                     self.analysis_frame['product'].isin(product_line)]
             last_month_revenue = last_month_frame['revenue'].sum()
             this_month_revenue = data_slice['revenue'].sum()
-            avg_change_over_month = 100 - (this_month_revenue / last_month_revenue) * 100
+            avg_change_over_month = (this_month_revenue / last_month_revenue) * 100
             line_list.append(avg_change_over_month)
             product_line = product_line_strings[line_index_counter]
             line_index_counter += 1
@@ -197,7 +197,6 @@ class ProductAnalysis:
         product_line_analysis_frame = pd.DataFrame(data=product_line_append_list,
                                                    columns=['year', 'month', 'avg_change_over_month',
                                                             'product_line'])
-        print(product_line_analysis_frame.head(7))
         return product_line_analysis_frame
 
     def serve_time_span(self):
@@ -211,21 +210,36 @@ class ProductAnalysis:
             change_list = month_frame['avg_change_over_month']
             line_change_frame_data.append(change_list)
         treated_line_change_frame_data = []
-        for i in range(len(line_change_frame_data)):
+        for i in range(len(line_change_frame_data)): #index of time period/segment
             if i ==0:
-                treated_line_change_frame_data.append(line_change_frame_data[0])
-            else:
+                treated_line_change_frame_data.append([self.time_span[i][0], self.time_span[i][1],
+                                                       0,0,0,0,0,0,0]) #insert base amounts for the first month
+            else: #function as intended
                 month_cumulative_change_list = []
+                month_cumulative_change_list.append(self.time_span[i][0])
+                month_cumulative_change_list.append(self.time_span[i][1])# append year and month
                 for x in range(len(line_change_frame_data[0])):
-                    prior_change_list = [x for x in line_change_frame_data[:][x]]
-                    product_cumulative_change = (treated_line_change_frame_data[i-1][x]/100) * ((100+prior_change_list[i])/100)*100
+                    prior_change_list = [i[x] for i in line_change_frame_data]
+                    product_cumulative_change = (100+treated_line_change_frame_data[i-1][x+2]) * ((prior_change_list[i]/100))-100
+                    #i-1 for previous time period and x+2 for offset due to year and month category
                     month_cumulative_change_list.append(product_cumulative_change)
                 treated_line_change_frame_data.append(month_cumulative_change_list)
-        print(treated_line_change_frame_data)
-        graph_frame = pd.DataFrame(data=treated_line_change_frame_data, columns=['Tea', 'Capsules', 'Smokeables','Skincare',
+        graph_frame = pd.DataFrame(data=treated_line_change_frame_data, columns=['Year', 'Month', 'Tea', 'Capsules', 'Smokeables','Skincare',
                                                                            'Superfood', 'Honey', 'Tinctures'])
-        print(graph_frame.head(15))
-        return graph_frame
+        print(graph_frame.head(7))
+        x = [str(i) for i in graph_frame['Month']]
+        y1 = graph_frame['Tea']
+        y2 = graph_frame['Capsules']
+        y3 = graph_frame['Superfood']
+        y4 = graph_frame['Honey']
+        y5 = graph_frame['Smokeables']
+        graph = figure(x_range=x,title='Cumulative Percentage Change of Product Lines',x_axis_label='Month', y_axis_label='Percentage Change')
+        graph.line(x, y1, legend_label ='Tea', color='red', line_width=3)
+        graph.line(x, y2, legend_label ='Capsules', color='blue', line_width=3)
+        graph.line(x, y3, legend_label ='Superfood', color='orange', line_width=3)
+        graph.line(x, y4, legend_label ='Honey', color='yellow', line_width=3)
+        graph.line(x, y5, legend_label ='Smokeables', color='green', line_width=3)
+        return show(graph)
         '''At the moment, the structure for the graph frame is in place, but the product_cumulative change variable is 
         likely the cause of problems. Needs debugging.'''
 
