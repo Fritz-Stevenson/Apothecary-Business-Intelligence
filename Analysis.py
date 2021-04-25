@@ -1,31 +1,54 @@
 import pandas as pd
+import sys
 import utility as u
 import macro_analysis as ma
+
 
 def profiles_master_init():
     frame = serve_frame()
     f = u.FieldLoader(frame)
     f
     u.date_difference_email_list_compiler()
-def macro_analysis_master_init():
-    frame = serve_frame()
-    dfa = ma.dataframe_analysis(frame)
-    dfa.avg_discount_rate()
-    dfa.geographical_breakdown()
-    dfa.customer_role_breakdown()
-def serve_frame():
-    frame = u.concat('.\\CSV_Files')
+
+
+def serve_frame(file):
+    frame = u.concat(file)
     frame = u.clean(frame)
     return frame
 
 
-#concat = pd.concat([df1,df2,df3,df6,df4,df5], ignore_index=True)
-#concat.to_csv("Raw_Analysis.csv", index=False)
+if sys.argv[1] == 'inventory':
+    fx = ma.InventoryPredictor()
+    fx.ingredient_volume_table()
+elif sys.argv[1] == 'geo':
+    frame = serve_frame('CSV_Files')
+    dfa = ma.DataframeAnalysis(frame)
+    dfa.geographical_breakdown()
+elif sys.argv[1] == 'role':
+    frame = serve_frame('CSV_Files')
+    dfa = ma.DataframeAnalysis(frame)
+    dfa.customer_role_breakdown()
+elif sys.argv[1] == 'discount':
+    frame = serve_frame('CSV_Files')
+    dfa = ma.DataframeAnalysis(frame)
+    dfa.avg_discount_rate()
+elif sys.argv[1] == 'pcp':
+    frame = serve_frame('CSV_Files')
+    dfpa = ma.ProductAnalysis(frame)
+    dfpa.highest_positive_product_change_over_month_analysis()
+elif sys.argv[1] == 'pcp':
+    frame = serve_frame('CSV_Files')
+    dfpa = ma.ProductAnalysis(frame)
+    dfpa.highest_negative_product_change_over_month_analysis()
+elif sys.argv[1] == 'plg':
+    frame = serve_frame('CSV_Files')
+    dfpa = ma.ProductAnalysis(frame)
+    dfpa.product_line_change_over_month_graph()
 
-file = pd.read_csv('Raw_Analysis.csv')
+
+file = u.concat('CSV_FIles')
 # Test slice for functionality
 file = u.clean(file)
-file = file.head(2)
 cp1 = u.FieldLoader(file)
 u.date_difference()
 u.date_difference_email_list_compiler()

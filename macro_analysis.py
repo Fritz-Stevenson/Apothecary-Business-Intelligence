@@ -1,13 +1,15 @@
 import pandas as pd
-from bokeh.plotting import figure, show, output_file, ColumnDataSource
+from bokeh.plotting import figure, show, ColumnDataSource
 from bokeh.models import HoverTool
-class dataframe_analysis:
-    '''Arms Macro-Analysis capability to a dataframe'''
+
+
+class DataframeAnalysis:
+    """Arms Macro-Analysis capability to a dataframe"""
     def __init__(self, frame):
         self.csv = frame  # dataframe object
 
     def avg_discount_rate(self):
-        '''Calculates average discount rate of all orders.'''
+        """Calculates average discount rate of all orders."""
         # You should calculate the average and gross discount rate.
         pd.to_numeric(self.csv['Discount_Amount'])
         pd.to_numeric(self.csv['Order_Total_Amount'])
@@ -18,7 +20,7 @@ class dataframe_analysis:
 
 
     def customer_role_breakdown(self):
-        '''Calculates proportion of retail/wholesale as a function of sales.'''
+        """Calculates proportion of retail/wholesale as a function of sales."""
         retail = 0
         wholesale = 0
         sum_count =int(len(self.csv.index))
@@ -50,10 +52,10 @@ class dataframe_analysis:
         visual.vbar_stack(subkey_list, x='Roles', width=0.6, color=['green', 'yellow'],
                           source=cdb_dv, legend_label=subkey_list)
         show(visual)
-        return print(c_role_dataframe)
+        return print(c_role_dataframe.head(3))
 
     def geographical_breakdown(self):
-        ''' Displays a scatterplot of Sales/Revenue weights for different States.'''
+        """ Displays a scatterplot of Sales/Revenue weights for different States."""
         self.csv = self.csv[self.csv.Country_Name_Shipping== 'United States (US)']
         counts = self.csv["State_Name_Shipping"].value_counts().to_dict()
         States = list(counts.keys())
@@ -83,8 +85,9 @@ class dataframe_analysis:
         show(visual)
         return print(geo_dataframe)
 
+
 class ProductAnalysis:
-    '''Arms product analysis capability to a dataframe'''
+    """Arms product analysis capability to a dataframe"""
 
     def __init__(self, frame):
         self.csv = frame  # dataframe object
@@ -92,6 +95,8 @@ class ProductAnalysis:
         self.time_span = self.serve_time_span()  # list of tuples: x[0] == year, x[1] == month for x in self.time_span
 
     def monthly_product_frame(self):
+        """Analyzes the order lines in the CSV_Files folder and
+        Returns a pandas Dataframe with monthly product statistics."""
         from datetime import datetime
         import information_repository as ir
         frame = self.csv
@@ -157,14 +162,25 @@ class ProductAnalysis:
         self.time_span = time_span
         return self.analysis_frame
 
-    def product_change_over_month_analysis(self):
+    def highest_positive_product_change_over_month_analysis(self):
+        """Analyzes the monthly_product_frame and returns the 5 products whose sales level increased the most"""
         year = int(input('Type the year you would like to query in yyyy format:  '))
         month = int(input('Type the month you would like to query:  '))
         data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[self.analysis_frame['revenue']>500]
         data_slice.sort_values(by='change_over_month', inplace=True, ascending=False)
         return print(data_slice.head(5))
 
+    def highest_negative_product_change_over_month_analysis(self):
+        """Analyzes the monthly_product_frame and returns the 5 products whose sales level decreased the most"""
+        year = int(input('Type the year you would like to query in yyyy format:  '))
+        month = int(input('Type the month you would like to query:  '))
+        data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[self.analysis_frame['revenue']>500]
+        data_slice.sort_values(by='change_over_month', inplace=True, ascending=True)
+        return print(data_slice.head(5))
+
     def product_line_change_over_month_analysis(self, year, month):
+        """Analyzes the monthly_product_frame by product line and returns a dataframe with
+        product line change over month data."""
         import information_repository as ir
         #year = int(input('Type the year you would like to query in yyyy format:  '))
         #month = int(input('Type the month you would like to query:  '))
@@ -200,10 +216,14 @@ class ProductAnalysis:
         return product_line_analysis_frame
 
     def serve_time_span(self):
+        """Returns a list of tuples of unique (year, month) pairs in chronological order based on the
+         monthly_product_frame."""
         return sorted(sorted(list(set([*zip(self.analysis_frame['year'],self.analysis_frame['month'])])),
                             key=lambda x:x[1]), key=lambda x:x[0])
 
     def product_line_change_over_month_graph(self):
+        """Using the product_line_change_over_month_analysis frame, it outputs a graph of the changes over time for
+        the top product lines."""
         line_change_frame_data = []
         for i in self.time_span:
             month_frame = self.product_line_change_over_month_analysis(i[0], i[1])
@@ -240,8 +260,93 @@ class ProductAnalysis:
         graph.line(x, y4, legend_label ='Honey', color='yellow', line_width=3)
         graph.line(x, y5, legend_label ='Smokeables', color='green', line_width=3)
         return show(graph)
-        '''At the moment, the structure for the graph frame is in place, but the product_cumulative change variable is 
-        likely the cause of problems. Needs debugging.'''
+
+
+class InventoryPredictor:
+    """Inventory volume prediction using a product sales csv as the raw data."""
+    def __init__(self):
+        import information_repository as ir
+        self.unit_counts = self.sales_unit_count_dictionaries()
+        self.ingredients = self.ingredient_dictionary()
+        self.recipes = ir.unit_recipes
+
+        print('initiating')
+        pass
+
+    def sales_unit_count_dictionaries(self):
+        """Creates a set of dictionaries for each product and the cumulative quantity of units across all SKUs."""
+        import information_repository as ir
+        product_sales_frame = pd.read_csv('Product Sales.csv')
+        product_sales_frame = product_sales_frame.where(pd.notnull(product_sales_frame), 'None')
+        product_unit_amounts = []
+        for i in ir.p_list:
+            product_dict = dict(name=i, quantity=0)
+            for x, row in product_sales_frame.iterrows():
+                if i in row['Product Name']:
+                    if i in ir.tea_product_list:
+                        if '1' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold']
+                        elif '3' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 3
+                        elif '20' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 20
+                        else:
+                            pass
+                            # print('Something unexpected occured', row['Product Name'], row['Variation Attributes'])
+                    elif i in ir.superfood_product_list:
+                        if '3' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold']
+                        elif '9' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 3
+                        else:
+                            product_dict['quantity'] += 1
+                    elif i in ir.capsule_product_list:
+                        if '1' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold']
+                        if '4' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 4
+                    elif i in ir.smokeable_product_list:
+                        if '7' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 7
+                        elif 'prerolls' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 2
+                        else:
+                            product_dict['quantity'] += row['Quantity Sold'] * 4
+                    elif i in ir.honey_product_list:
+                        if '3' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 3
+                        elif '5' in row['Variation Attributes']:
+                            product_dict['quantity'] += row['Quantity Sold'] * 5
+                        elif '2' in row['Variation Attributes']:
+                            pass
+                            # print('Reminder that packet honeys and jars need to separate')
+                    else:
+                        product_dict['quantity'] += row['Quantity Sold']
+            product_unit_amounts.append(product_dict)
+        return product_unit_amounts
+
+    def ingredient_dictionary(self):
+        """Creates a ingredient dictionary with all ingredients as keys and the cumulative volume across all
+        products as values."""
+        inventory = pd.read_csv('craftybase-export-material.csv')
+        ingredient_dictionary = {}
+        for i in list(inventory['name']):
+            ingredient_dictionary[i]=0
+        return ingredient_dictionary
+
+    def ingredient_volume_table(self):
+        """Creates a csv with ingredients and the cumulative volume used across a time span."""
+        for x in self.unit_counts:
+            for y in self.recipes:
+                if x['name'] == y['name']:
+                    for k, v in y.items():
+                        if k != 'name':
+                            self.ingredients[k] += v * x['quantity']
+                            print(f'{x["name"]} {k} {self.ingredients[k]} current ingredient volume')
+        sorted_ingredient_volumes = sorted(self.ingredients.items(), key=lambda x: x[1], reverse=True)
+        output_frame = pd.DataFrame(data = sorted_ingredient_volumes, columns= ['Ingredient', 'Volume (gram or oz)'])
+        output_frame = output_frame[output_frame['Volume (gram or oz)'] !=0]
+        output_frame.to_csv('Ingredient_Volume_Table.csv')
 
 
 import utility as u

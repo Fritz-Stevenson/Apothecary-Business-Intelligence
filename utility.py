@@ -5,7 +5,7 @@ from datetime import datetime
 def clean(inp):
     ''' Cleans a dataframe used for analysis, removing erroneous characters from columns.'''
     obj = inp
-    obj.columns = obj.columns.str.replace(' ','_')
+    obj.columns = obj.columns.str.replace(' ', '_')
     obj.columns = obj.columns.str.replace('(', '')
     obj.columns = obj.columns.str.replace(')', '')
     obj.fillna(0)
@@ -23,6 +23,8 @@ def concat(dir_name):
             frame_list.append(sub_frame)
     frame = pd.concat(frame_list, ignore_index=True)
     os.chdir('C:\\Users\\fritz\\PycharmProjects\\Brothers_Analysis')
+    output = 'concat_file.csv'
+    frame.to_csv(output, index = False)
     return frame
             
 class FieldLoader:
@@ -44,7 +46,6 @@ class FieldLoader:
         '''Sets appropriate cells as parameters, in the correct order '''
         #how about making this a list of lists, and making each row accessible as the fields
         # of a customer_profile_module.SalesRow call
-        name = self.frame.loc[:, 'Full_Name_Billing']
         role = self.frame.loc[:, "Customer_Role"]
         email = self.frame.loc[:, 'Email_Billing']
         date = self.frame.loc[:, 'Order_Date']
@@ -54,6 +55,7 @@ class FieldLoader:
         raw_sales_product_cell = self.frame.loc[:, "Product_Name"]
         raw_product_quantity_cell = self.frame.loc[:, "Quantity"]
         total_gross_sales = self.frame.loc[:, "Customer_Total_Spent"]
+        name = self.frame.loc[:, 'Full_Name_Billing']
         raw_item_cost_cell = self.frame.loc[:, "Item_Cost"]
         field_zip = zip(name, role, email, date, first_order, sale_total, number_of_sales, raw_sales_product_cell,
             raw_product_quantity_cell, raw_item_cost_cell, total_gross_sales)
