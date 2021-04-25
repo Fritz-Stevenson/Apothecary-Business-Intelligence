@@ -3,13 +3,30 @@
 
 **Analysis instructions:**
 
-First, download the sales export as a csv from the woocommerce app in the wordpress engine.
-The fields should be in the following order, as concatenation will disjoint columns if column names aren't identical,
-making other functions useless.
+This project aims to provide business intelligence solutions for a company, The Brothers Apothecary. It features functions including a customer history database, promotional sales email lists, calculating inventory needs over a set period of time, and the analysis and visualization of statistics such as geographical and categorical data of sales, discount rates, and product and product lines' change over month.  
+
+In order to utilize this program, one must have access to the appropriate data and insert it into the program folder in the appropriate way. A virtual environment also must be set up to satisfy python module dependancies.
+
+You will need to set up a virtual environment in the downloaded program folder and install the requirements.txt. 
+
+Here is the python documentation: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
+
+You will need to download the most recent csv files as well:
+
+craftybase-export-material.csv (From the Material section of craftybase. Check that the title of the file is identical)
+
+product_sales.csv (From the wp site, click the product sales export sub section of the woocommerce app. Exporting processing and completed orders for the last 30 days.)
+
+all monthly csv files placed in the CSV_Files folder :
+  Format as ordersYY-MM.csv so that the folder is in chronological order.
+  Keep in mind that all csv files will be included in the analysis functions. If you want discount data for a single month, make sure a single month is present in the folder.
+  for full functionality the csvs must have the following columns in order:
 
 Order Date,
 
 Email (Billing)
+
+Full Name (Billing)
 
 Customer Role
 
@@ -43,33 +60,19 @@ Discount Amount
 
 Order Total Amount
 
-In my experience, the time frame on the export field may need to be as little as 1 month due to a download time cap.
+***This Program will ideally be run in a command line, through system arguments/sys.argv[1] While not yet implemented, which will include the following:***
+geo : geographical scatterplot
+discount : printed average discount rate for the period
+role : customer role table
+inventory : outputs csv file in program folder with volumes of each ingredient over the period
+pcp : products with greatest positive change in sales (requires more than one month in CSV_Files)
+ncp : products with greatest negative change in sales (requires more than one month in CSV_Files)
+plg : graph of product line sales' change over month (requires more than one month in CSV_Files)
 
-First drag the csv or csvs to be used for analysis into the CSV_Files folder. Then verify that there is not csv in the 
-CSV_Files folder that you would like concatenated together to your final csv.
-
-#MACRO_ANALYSIS
+**To run the following commands, navigate to the program folder in the cmd application, activate the virtual env using the docs linked above, and input**
+**"python3 analysis.py x" where x is on of the above arguments
 ***The following will be edited into the Analysis.py file before it is run from the command line or an ide like pycharm.***
 
-**INITIALIZE**
-
-To initialize the dataframe you can use the concat function from the utility module. This will create a dataframe by 
-concatenating csv(s) in the CSV_Folder. The field required is the folder path ie. 
---frame = utility.concat('.\\folder_name'). 
-All CSVs in the folder will be added to the dataframe. Be careful not to include duplicates. Clean the dataframe in 
-question using utilty.clean ie. 
-
---frame = utility.clean(frame)
-
-At this point the macro_analysis module is able to be utilized
-Analysis.py has already imported macro_analysis as ma. Initialize the object by calling 
-
---analysis = ma.dataframe_analysis(frame),
-
-where frame refers to the previously cleaned dataframe you can then call the class functions using analysis.x where x is one of the functions.
-Some analyses include geographical_breakdown, customer_role_breakdown, avg_discount_rate.
-Most of these analyses should create data vizualizations as an html page in your default browser.
-If they do not automatically open, check your firewall or browser access permissions. 
 
 #CUSTOMER_PROFILE
 ***Customer Profiles are sensitive documents that need to be maintained and accessed carefully
