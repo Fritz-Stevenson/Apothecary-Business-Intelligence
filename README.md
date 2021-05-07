@@ -1,9 +1,12 @@
 # Business-Data-Analysis
 ***Sales data analysis and the creation of a customer profile database.***
 
-**Analysis instructions:**
+**Analysis Overview**
 
-This project aims to provide business intelligence solutions for a company, The Brothers Apothecary. It features functions including a customer history database, promotional sales email lists, calculating inventory needs over a set period of time, and the analysis and visualization of statistics such as geographical and categorical data of sales, discount rates, and product and product lines' change over month.  
+This data analysis project is built for a small business with a large range of products and fairly high variability in sales trends. Products and even product lines can vary greatly in terms of sales change month over month. In order to maintain stock of inventory and ingredients, and pinpoint potential quality assurance problems, it is important to understand generalized trends and outliers. This Analysis Project tackles this problem as well as addressing inventory purchasing, promotional email lists based on time since last order, and the creation of a customer profile database to pinpoint sales trends on a customer basis.
+
+
+**Analysis instructions:**
 
 In order to utilize this program, one must have access to the appropriate data and insert it into the program folder in the appropriate way. A virtual environment also must be set up to satisfy python module dependancies.
 
@@ -59,6 +62,8 @@ Quantity
 Discount Amount
 
 Order Total Amount
+
+#Currently, the optimal method of running files from this directory is depositing all of the files in the repository in an IDE such as pycharm and calling functions manually.
 
 ***This Program will ideally be run in a command line, through system arguments/sys.argv[1] While not yet implemented, which will include the following:***
 geo : geographical scatterplot
