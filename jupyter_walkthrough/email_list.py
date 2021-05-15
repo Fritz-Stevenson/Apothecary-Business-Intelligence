@@ -6,6 +6,8 @@ os.chdir('C:\\Users\\fritz\\Documents\\DataBases\\brothers')
 final_data_object = pd.concat([pd.read_csv(i) for i in os.listdir()])
 os.chdir('C:\\Users\\fritz\\Documents\\DataBases')
 final_data_object.to_csv('final_email_list.csv', index = False)
+
+
 def date_difference_email_ready(obj):
     '''Iterates over the rows in a pandas object to find the date since purchase and return emails whose last purchase
     is older than the date_parameter
