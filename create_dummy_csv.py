@@ -22,6 +22,7 @@ def prep_dummy_csv():
     to_dummy_csv['Discount_Amount'].loc[to_dummy_csv['Discount_Amount'].isna()] = to_dummy_csv['Discount_Amount'].mean()
     print(to_dummy_csv.isna().sum())
     to_dummy_csv.dropna(inplace=True)
+    to_dummy_csv= to_dummy_csv.loc[to_dummy_csv['Order_Date']<='2020-12-31-23:59']
     print(to_dummy_csv.head(5))
     print(to_dummy_csv.columns)
     print(to_dummy_csv.tail(5))

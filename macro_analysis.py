@@ -1,20 +1,20 @@
 import pandas as pd
-from bokeh.plotting import figure, show, ColumnDataSource
+from bokeh.plotting import figure, save, show,output_file, ColumnDataSource
 from bokeh.models import HoverTool
+import matplotlib.pyplot as plt
 
-
-class DataframeAnalysis:
+class DataFrameAnalysis:
     """Arms Macro-Analysis capability to a dataframe"""
     def __init__(self, frame):
-        self.csv = frame  # dataframe object
+        self.df = frame  # dataframe object
 
     def avg_discount_rate(self):
         """Calculates average discount rate of all orders."""
         # You should calculate the average and gross discount rate.
-        pd.to_numeric(self.csv['Discount_Amount'])
-        pd.to_numeric(self.csv['Order_Total_Amount'])
-        total_sales_amount = self.csv['Order_Total_Amount'].sum()
-        total_discount_amount = self.csv['Discount_Amount'].sum()
+        pd.to_numeric(self.df['Discount_Amount'])
+        pd.to_numeric(self.df['Order_Total_Amount'])
+        total_sales_amount = self.df['Order_Total_Amount'].sum()
+        total_discount_amount = self.df['Discount_Amount'].sum()
         total_discount_avg = int((total_discount_amount / (total_discount_amount+total_sales_amount))*100)
         return print(f'Customer Discount Avg: {total_discount_avg}%')
 
@@ -23,48 +23,32 @@ class DataframeAnalysis:
         """Calculates proportion of retail/wholesale as a function of sales."""
         retail = 0
         wholesale = 0
-        sum_count =int(len(self.csv.index))
-        for i, row in self.csv.iterrows():
-            if row.loc["Customer_Role"] == 'Customer':
-                retail += int(row.loc["Order_Total_Amount"])
-            else: wholesale += int(row.loc["Order_Total_Amount"])
-        sum_sales = retail + wholesale
-        counts = self.csv["Customer_Role"].value_counts().to_dict()
-        roles = list(counts.keys())
-        count = list(counts.values())
-        data = zip(roles, count)
-        c_role_dataframe = pd.DataFrame(data, columns = ['Roles', 'Count'])
-        c_role_dataframe = c_role_dataframe[c_role_dataframe.Roles != 'Subscriber']
-        c_role_dataframe.insert(2,column ='Sales_Total', value=[int(retail), int(wholesale)])
-        c_role_dataframe['Average_Sale_Revenue']= c_role_dataframe['Sales_Total']/c_role_dataframe['Count']
-        c_role_dataframe['Proportional_Sales'] = c_role_dataframe['Sales_Total']/sum_sales
-        c_role_dataframe['Proportional_Count'] = c_role_dataframe['Count']/sum_count
-        cdb_dv = ColumnDataSource(c_role_dataframe)
-        roles = c_role_dataframe['Roles'].tolist()
-        cdb_dv.data.keys()
-        subkey_list = ['Proportional_Sales', 'Proportional_Count']
-        visual = figure(x_range= roles, width=700, height=700,
-                        title='Customer Role Sales Breakdown', x_axis_label='Roles',
-                        y_axis_label='Proportionate Value', toolbar_location=None, tools='hover',
-                        tooltips=[('Average Sale Revenue', '@Average_Sale_Revenue'),
-                                  ]
-                        )
-        visual.vbar_stack(subkey_list, x='Roles', width=0.6, color=['green', 'yellow'],
-                          source=cdb_dv, legend_label=subkey_list)
-        show(visual)
-        return print(c_role_dataframe.head(3))
+        sum_count =int(len(self.df.index))
+        sum_sales = self.df['Order_Total_Amount'].sum()
+        retail_customer_count = round((len(self.df.loc[self.df['Customer_Role']=='Customer'].index)/sum_count)*100)
+        wholesale_customer_count = round((len(self.df.loc[self.df['Customer_Role']=='Wholesale Customer'].index)/sum_count)*100)
+        retail_sales = round((self.df['Order_Total_Amount'].loc[self.df['Customer_Role']=='Customer'].sum()/sum_sales)*100)
+        wholesale_sales = round((self.df['Order_Total_Amount'].loc[self.df['Customer_Role']=='Wholesale Customer'].sum()/sum_sales)*100)
+        grid = [[retail_customer_count,wholesale_customer_count],[retail_sales,wholesale_sales]]
+        crb_df = pd.DataFrame(data=grid, columns=['Retail','Wholesale'], index=['Proportional Order Counts', 'Proportional Sales'])
+        plt.style.use('seaborn-deep')
+        fig, ax = plt.subplots(figsize=(10, 10))
+        crb_df.plot.bar(title='Customer Role Breakdown', xlabel='Customer Role', ylabel='Proportion (%)',
+                        cmap='winter', ax=ax)
+        plt.figsave('Customer_Role_Breakdown.png')
+        print(crb_df.head(3))
 
     def geographical_breakdown(self):
         """ Displays a scatterplot of Sales/Revenue weights for different States."""
-        self.csv = self.csv[self.csv.Country_Name_Shipping== 'United States (US)']
-        counts = self.csv["State_Name_Shipping"].value_counts().to_dict()
+        self.df = self.df[self.df.Country_Name_Shipping== 'United States (US)']
+        counts = self.df["State_Name_Shipping"].value_counts().to_dict()
         States = list(counts.keys())
         Count = list(counts.values())
         geo = pd.DataFrame({'States': States, 'Counts': Count})
         geo_dataframe = pd.DataFrame(geo)
         geo_dataframe.insert(loc=2, column="Sales_Total", value=0)
         geo_dataframe.insert(loc=3, column="Avg_Purchase_Revenue", value=0)
-        for i, row in self.csv.iterrows():
+        for i, row in self.df.iterrows():
             state = row.loc['State_Name_Shipping']
             total = row.loc['Order_Total_Amount']
             idx = geo_dataframe[geo_dataframe["States"] == state].index.item()
@@ -82,6 +66,8 @@ class DataframeAnalysis:
         visual.add_tools(HoverTool(tooltips=[("State", "@States"),
                                              ("Average Purchase Revenue", "@Avg_Purchase_Revenue")
                                              ]))
+        output_file('geographical_breakdown.html')
+        save(visual)
         show(visual)
         return print(geo_dataframe)
 
@@ -90,7 +76,7 @@ class ProductAnalysis:
     """Arms product analysis capability to a dataframe"""
 
     def __init__(self, frame):
-        self.csv = frame  # dataframe object
+        self.df = frame  # dataframe object
         self.analysis_frame = self.monthly_product_frame()
         self.time_span = self.serve_time_span()  # list of tuples: x[0] == year, x[1] == month for x in self.time_span
 
@@ -99,7 +85,7 @@ class ProductAnalysis:
         Returns a pandas Dataframe with monthly product statistics."""
         from datetime import datetime
         import information_repository as ir
-        frame = self.csv
+        frame = self.df
         frame = frame[['Order_Date', 'Product_Name', 'Quantity', 'Item_Cost']]
         dict_list = []
         for i, row in frame.iterrows():
@@ -176,7 +162,7 @@ class ProductAnalysis:
         month = int(input('Type the month you would like to query:  '))
         data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[self.analysis_frame['revenue']>500]
         data_slice.sort_values(by='change_over_month', inplace=True, ascending=True)
-        return print(data_slice.head(5))
+        return data_slice
 
     def product_line_change_over_month_analysis(self, year, month):
         """Analyzes the monthly_product_frame by product line and returns a dataframe with
@@ -194,14 +180,14 @@ class ProductAnalysis:
             line_list = []
             line_list.append(year)
             line_list.append(month)
-            data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[self.analysis_frame['year'] == year].loc[
-                self.analysis_frame['product'].isin(product_line)]
+            data_slice = self.analysis_frame.loc[self.analysis_frame['month'] == month].loc[
+                self.analysis_frame['year'] == year].loc[self.analysis_frame['product'].isin(product_line)]
             if month > 1:
-                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == (month - 1)].loc[self.analysis_frame['year'] == year].loc[
-                    self.analysis_frame['product'].isin(product_line)]
+                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == (month - 1)].loc[
+                    self.analysis_frame['year'] == year].loc[self.analysis_frame['product'].isin(product_line)]
             else:
-                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == 12].loc[self.analysis_frame['year'] == (year - 1)].loc[
-                    self.analysis_frame['product'].isin(product_line)]
+                last_month_frame = self.analysis_frame.loc[self.analysis_frame['month'] == 12].loc[
+                    self.analysis_frame['year'] == (year - 1)].loc[self.analysis_frame['product'].isin(product_line)]
             last_month_revenue = last_month_frame['revenue'].sum()
             this_month_revenue = data_slice['revenue'].sum()
             avg_change_over_month = (this_month_revenue / last_month_revenue) * 100
@@ -213,6 +199,7 @@ class ProductAnalysis:
         product_line_analysis_frame = pd.DataFrame(data=product_line_append_list,
                                                    columns=['year', 'month', 'avg_change_over_month',
                                                             'product_line'])
+        product_line_analysis_frame.to_csv('product_line_csv_2021.csv')
         return product_line_analysis_frame
 
     def serve_time_span(self):
@@ -259,6 +246,8 @@ class ProductAnalysis:
         graph.line(x, y3, legend_label ='Superfood', color='orange', line_width=3)
         graph.line(x, y4, legend_label ='Honey', color='yellow', line_width=3)
         graph.line(x, y5, legend_label ='Smokeables', color='green', line_width=3)
+        output_file('product_line_change_over_month.html')
+        save(graph)
         return show(graph)
 
 
@@ -276,7 +265,7 @@ class InventoryPredictor:
     def sales_unit_count_dictionaries(self):
         """Creates a set of dictionaries for each product and the cumulative quantity of units across all SKUs."""
         import information_repository as ir
-        product_sales_frame = pd.read_csv('Product Sales.csv')
+        product_sales_frame = pd.read_csv('product_sales.csv')
         product_sales_frame = product_sales_frame.where(pd.notnull(product_sales_frame), 'None')
         product_unit_amounts = []
         for i in ir.p_list:
@@ -342,14 +331,9 @@ class InventoryPredictor:
                     for k, v in y.items():
                         if k != 'name':
                             self.ingredients[k] += v * x['quantity']
-                            print(f'{x["name"]} {k} {self.ingredients[k]} current ingredient volume')
         sorted_ingredient_volumes = sorted(self.ingredients.items(), key=lambda x: x[1], reverse=True)
         output_frame = pd.DataFrame(data = sorted_ingredient_volumes, columns= ['Ingredient', 'Volume (gram or oz)'])
         output_frame = output_frame[output_frame['Volume (gram or oz)'] !=0]
-        output_frame.to_csv('Ingredient_Volume_Table.csv')
+        output_frame.to_csv('ingredient_volume_table.csv')
 
 
-import utility as u
-object = u.clean(u.concat('CSV_Files'))
-a = ProductAnalysis(object)
-a.product_line_change_over_month_graph()
